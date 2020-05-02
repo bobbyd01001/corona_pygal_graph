@@ -1,0 +1,116 @@
+# import required modules
+import pandas as pd
+import pygal
+from pygal.style import Style
+import wget
+import os
+
+
+# stored variables
+corvid_data = 'covid_19_data.csv'
+file_exist = os.path.exists(corvid_data)
+url = 'https://opendata.ecdc.europa.eu/covid19/casedistribution/csv'
+coronavirus_19_data = pd.read_csv(corvid_data)
+# display maximum rows in data frame
+pd.set_option('display.max_rows', None)
+# create data frame
+df1 = pd.DataFrame(coronavirus_19_data, columns=['day', 'month',
+                                                 'cases', 'deaths',
+                                                 'countriesAndTerritories',
+                                                 'continentExp'])
+
+# total value of confirmed worldwide in Series
+total_confirmed = df1['cases'].sum()
+# total value of deaths worldwide in Series
+total_deaths = df1['deaths'].sum()
+
+
+def covid_confirmed():
+    """function to create bar chart of Total Covid infections by Country"""
+    country_confirm_total = (df1.groupby('countriesAndTerritories')['cases'].sum().sort_values(ascending=False).head(top_number))
+    bar_chart = pygal.HorizontalBar()
+    bar_chart.title = "Top {0} Countries with Confirmed Covid-19 Cases".format(top_number)
+    [bar_chart.add(x[0], x[1], ) for x in country_confirm_total.items()]
+    bar_chart.render_in_browser(is_unicode=True)
+
+
+def covid_deaths():
+    """function to create bar chart of Total Covid Deaths by Country"""
+    country_death_total = (df1.groupby('countriesAndTerritories')['deaths'].sum().sort_values(ascending=False).head(top_number))
+    bar_chart = pygal.HorizontalBar()
+    bar_chart.title = "Top {0} Countries with Confirmed Covid-19 Deaths".format(top_number)
+    [bar_chart.add(x[0], x[1]) for x in country_death_total.items()]
+    bar_chart.render_in_browser(is_unicode=True)
+
+
+def total_covid_cases_per_month():
+    """function to create bar chart of Total Covid infections by Country"""
+    country_cases = (df1.groupby('month')['cases'].sum().sort_values(ascending=False).head(top_number))
+    print('Total Cases Per Month')
+    print(country_cases)
+
+
+def total_covid_death_per_month():
+    """function to create bar chart of Total Covid infections by Country"""
+    country_deaths = (df1.groupby('month')['deaths'].sum().sort_values(ascending=False).head(top_number))
+    print('Total Deaths Per Month')
+    print(country_deaths)
+
+
+def global_cases():
+    # create custom color style for bars
+    custom_style = Style(colors=('#DAA520', '#008000'))
+
+    # Bar chart showing global covid totals
+    bar_chart = pygal.HorizontalBar(human_readable=True, style=custom_style)
+    # creates title for bar chart
+    bar_chart.title = "Global Covid-19 Statistics"
+    # adds bar to chart with total confirmed worldwide
+    bar_chart.add("cases", [{'value': total_confirmed, 'label': 'Global Infections'}])
+    # adds bar to chart with total deaths worldwide
+    bar_chart.add("deaths", [{'value': total_deaths, 'label': 'Global Deaths'}])
+    # renders the bar chart in a web browser
+    bar_chart.render_in_browser()
+
+
+def continent_totals():
+    country_confirm_total = (df1.groupby('continentExp')['cases'].sum().sort_values(ascending=False).head(top_number))
+    bar_chart = pygal.HorizontalBar()
+    bar_chart.title = "Continents with Confirmed Covid-19 Cases".format(top_number)
+    [bar_chart.add(x[0], x[1], ) for x in country_confirm_total.items()]
+    bar_chart.render_in_browser(is_unicode=True)
+
+    country_confirm_total = (df1.groupby('continentExp')['deaths'].sum().sort_values(ascending=False).head(top_number))
+    bar_chart = pygal.HorizontalBar()
+    bar_chart.title = "Continents with Confirmed Covid-19 Deaths".format(top_number)
+    [bar_chart.add(x[0], x[1], ) for x in country_confirm_total.items()]
+    bar_chart.render_in_browser(is_unicode=True)
+
+
+if file_exist:
+    print('The file exist')
+    new_data = input('Do you want to download the most current covid-19 data? ' + 'yes or no: ')
+    if new_data == 'yes':
+        print('I will remove the old Corvid-19 data file first')
+        os.remove(corvid_data)
+        print('Downloading the most current data ')
+        wget.download(url, corvid_data)
+    elif new_data == 'no':
+        print('update not needed.')
+else:
+    print('File does not exist')
+    print('I need to retrieve the file for you')
+    wget.download(url, corvid_data)
+    print('Downloading the most current data...')
+
+
+# print(df1.groupby('countriesAndTerritories').sum())
+
+# run functions
+top_number = int(input('What number of Countries do you want to check? '))
+covid_confirmed()
+covid_deaths()
+total_covid_cases_per_month()
+total_covid_death_per_month()
+continent_totals()
+global_cases()
